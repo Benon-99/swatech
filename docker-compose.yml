@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # Backend service
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - NODE_ENV=production
+      - ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+      # Add other environment variables needed by your backend
+    volumes:
+      - ./server/logs:/app/server/logs
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

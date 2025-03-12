@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255)
+  role       Role     @default(USER)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  posts      Post[]
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String   @db.VarChar(255)
+  content    String   @db.Text
+  slug       String   @unique @db.VarChar(255)
+  date       DateTime @default(now())
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  image      String   @db.VarChar(255)
+  published  Boolean  @default(false)
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique @db.VarChar(100)
+  posts Post[]
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @db.VarChar(255)
+  subject    String   @db.VarChar(255)
+  message    String   @db.Text
+  created_at DateTime @default(now())
+
+  @@index([email])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Home {
+  id         Int   @id @default(autoincrement())
+  aboutUs    Json
+  advantages Json
+  services   Json?
+}
+
+model Categories {
+  id               Int        @id @default(autoincrement())
+  category         String     @unique // URL path segment
+  title            String // "Business Outsourcing"
+  mainDescription  String // Hero section description
+  overviewTitle    String // "Market Leading HR Solutions"
+  overviewContent  String // Full overview paragraph
+  offeringsTitle   String // "Business Outsourcing Solutions"
+  offeringsContent String // Description of offerings
+  services         Services[] // Relation to Services
+}
+
+model Services {
+  id              Int         @id @default(autoincrement())
+  title           String      @unique
+  description     String
+  servicelink     String      @unique
+  overviewtitle   String
+  overviewcontent String
+  features        Feature[] // Relation to Features
+  category        Categories? @relation(fields: [categoryId], references: [id])
+  categoryId      Int?
+  status          Boolean     @default(false)
+}
+
+model Feature {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  service     Services? @relation(fields: [serviceId], references: [id])
+  serviceId   Int?
+}
+
+model About {
+  id          Int     @id @default(autoincrement())
+  title       String  @db.VarChar(255)
+  subtitle    String  @db.VarChar(255)
+  description String  @db.Text // Changed from String[] to Text to store JSON
+  mission     String  @db.Text
+  vision      String  @db.Text
+  img         String? @db.VarChar(255) // Optional image
+  values      Value[] // Relation to the Value model
+  stats       Stat[] // Relation to the Stat model
+}
+
+model Value {
+  id      Int    @id @default(autoincrement())
+  icon    String @db.VarChar(100)
+  title   String @db.VarChar(255)
+  text    String @db.Text
+  about   About  @relation(fields: [aboutId], references: [id])
+  aboutId Int
+}
+
+model Stat {
+  id      Int    @id @default(autoincrement())
+  number  String @db.VarChar(50)
+  label   String @db.VarChar(255)
+  about   About  @relation(fields: [aboutId], references: [id])
+  aboutId Int
+}
