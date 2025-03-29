@@ -1,76 +1,76 @@
-"use client";
-
-import React, { useContext } from "react";
-import { useState, useEffect } from "react";
+"use client"
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import CutomRouter from "next/link";
+import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, Shield, Lock } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useContext } from "react";
 import { LoadingContext } from "./providers/LoadingProvider";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
+  const [mobileSolutionsDropdownOpen, setMobileSolutionsDropdownOpen] = useState(false);
 
-  const { CutomRouter } = useContext(LoadingContext)!;
+  const loadingContext = useContext(LoadingContext);
+  const { setIsLoading } = loadingContext || { setIsLoading: () => {} };
+  
+  // Handle links with transition
+  const handleLinkClick = (href: string) => {
+    // Trigger loading state before navigation
+    setIsLoading(true);
+    setTimeout(() => {
+      window.location.href = href;
+    }, 300);
+  };
 
+  // Control navbar visibility based on scroll direction
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      const currentScrollPos = window.scrollY;
+      
+      // Make navbar visible at the top of the page
+      if (currentScrollPos < 10) {
+        setVisible(true);
+        setIsScrolled(false);
+        setPrevScrollPos(currentScrollPos);
+        return;
+      }
+      
+      setIsScrolled(true);
+      
+      // Show navbar when scrolling UP, hide when scrolling DOWN
+      const isScrollingUp = prevScrollPos > currentScrollPos;
+      setVisible(isScrollingUp);
+      
+      setPrevScrollPos(currentScrollPos);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [prevScrollPos]);
 
-  const menuItems = [
-    {
-      title: "What We Offer",
-      submenu: [
-        {
-          title: "Business Outsourcing",
-          href: "/services/business-outsourcing",
-          items: [
-            {
-              name: "Jobs.ici – Recruiting",
-              href: "/services/business-outsourcing/jobs-ici",
-            },
-            {
-              name: "HR & Recruitment Management",
-              href: "/services/business-outsourcing/hr-recruitment",
-            },
-            {
-              name: "HR Payroll & Performance Management",
-              href: "/services/business-outsourcing/hr-payroll",
-            },
-          ],
-        },
-        {
-          title: "ICT Solutions",
-          href: "/services/ict-solutions",
-          items: [
-            {
-              name: "Data Center Infrastructure",
-              href: "/services/ict-solutions/data-center",
-            },
-            {
-              name: "Solutions Integration",
-              href: "/services/ict-solutions/solutions-integration",
-            },
-            {
-              name: "Information Security",
-              href: "/services/ict-solutions/information-security",
-            },
-            {
-              name: "Software Development",
-              href: "/services/ict-solutions/software-development",
-            },
-          ],
-        },
-      ],
-    },
+  const navItems = [
+    { title: "Home", href: "/" },
+    { title: "About Us", href: "/about" },
+    { title: "Solutions", href: "/solutions" },
   ];
+
+  // const solutionItems = [
+  //   { 
+  //     category: "Security Solutions",
+  //     items: [
+  //       { title: "Milestone XProtect® VMS", href: "/solutions#milestone-xprotect" },
+  //       { title: "BriefCam Video Analytics", href: "/solutions#briefcam-video-analytics" },
+  //       { title: "O-Insights for Milestone", href: "/solutions#o-insights" }
+  //     ]
+  //   },
+  // ];
+
   const pathname = usePathname();
 
   if (pathname.startsWith("/admin")) {
@@ -79,102 +79,71 @@ const Navbar = () => {
 
   return (
     <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
+      initial={{ y: 0, opacity: 1 }}
+      animate={{ 
+        y: visible ? 0 : -100,
+        opacity: visible ? 1 : 0
+      }}
+      transition={{ duration: 0.3 }}
       className={`fixed w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-gray-900/80 backdrop-blur-lg border-b border-white/10"
-          : "bg-transparent"
+          ? "bg-dark/90 backdrop-blur-lg border-b border-secondary/20 cyber-scanline"
+          : "bg-dark/80 backdrop-blur-md"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-20">
-          <CutomRouter href="/" className="flex items-center">
-            <Image
-              src="/logo_ow.webp"
-              alt="IC&I Logo"
-              width={120}
-              height={48}
-              className="h-12 w-auto transition-all duration-300"
-            />
-          </CutomRouter>
+          <Link href="/" className="flex items-center" onClick={(e) => {
+            e.preventDefault();
+            handleLinkClick("/");
+          }}>
+            <div className="relative group">
+              <Image
+                src="/logo_ow.webp"
+                alt="SwaTech Logo"
+                width={120}
+                height={48}
+                className="h-12 w-auto transition-all duration-300 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-secondary/20 filter blur-xl rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+            </div>
+          </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <CutomRouter
-              href="/"
-              className="text-white/90 hover:text-white transition-colors relative group"
-            >
-              <span>Home</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#181c52] group-hover:w-full transition-all duration-300"></span>
-            </CutomRouter>
+          <div className="hidden md:flex items-center space-x-6">
+            {navItems.map((item, index) => (
+              
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLinkClick(item.href);
+                  }}
+                  className={`text-${pathname === item.href ? 'secondary' : 'gray-300'} hover:text-secondary transition-colors relative group`}
+                >
+                  <span>{item.title}</span>
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-secondary group-hover:w-full transition-all duration-300"></span>
+                </Link>
+              ) 
+            )}
 
-            <div className="relative group">
-              <CutomRouter
-                href="/services"
-                className="flex items-center text-white/90 hover:text-white transition-colors"
-              >
-                What We Offer
-                <ChevronDown className="ml-1 h-4 w-4 transform group-hover:rotate-180 transition-transform duration-300" />
-              </CutomRouter>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 hidden group-hover:block w-[600px] p-1">
-                <div className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-                  <div className="grid grid-cols-2 gap-8">
-                    {menuItems[0].submenu.map((section) => (
-                      <div key={section.title} className="space-y-4">
-                        <CutomRouter href={section.href} className="block">
-                          <h3 className="text-white font-semibold mb-2 hover:text-[#3785CC] transition-colors">
-                            {section.title}
-                          </h3>
-                        </CutomRouter>
-                        <div className="space-y-2">
-                          {section.items.map((item) => (
-                            <CutomRouter
-                              key={item.name}
-                              href={item.href}
-                              className="group flex items-center text-white hover:text-[#3785CC] transition-colors py-2"
-                            >
-                              <ChevronRight className="w-4 h-4 mr-2 transform group-hover:translate-x-1 transition-transform duration-300" />
-                              {item.name}
-                            </CutomRouter>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <CutomRouter
-              href="/about"
-              className="text-white/90 hover:text-white transition-colors relative group"
-            >
-              <span>About Us</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#181c52] group-hover:w-full transition-all duration-300"></span>
-            </CutomRouter>
-
-            <CutomRouter
-              href="/blogs"
-              className="text-white/90 hover:text-white transition-colors relative group"
-            >
-              <span>Blog</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#181c52] group-hover:w-full transition-all duration-300"></span>
-            </CutomRouter>
-
-            <CutomRouter
+            <Link
               href="/contact"
-              className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium rounded-full shadow-sm text-white bg-[#3785CC] hover:bg-[#3785CC]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3785CC]/50 transition-all duration-300"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLinkClick("/contact");
+              }}
+              className="inline-flex items-center justify-center px-6 py-2 text-sm font-medium rounded-md text-primary bg-secondary hover:opacity-90 focus:outline-none transition-all duration-300 shadow-[0_0_10px_rgba(14,246,204,0.3)]"
             >
               Contact Us
-            </CutomRouter>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-white focus:outline-none"
+            className="md:hidden text-secondary focus:outline-none"
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -188,60 +157,96 @@ const Navbar = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden bg-gray-900/95 backdrop-blur-xl border-t border-white/10"
+              className="md:hidden cyber-card cyber-border rounded-b-lg"
             >
-              <div className="px-4 py-6 space-y-4">
-                <CutomRouter
-                  href="/"
-                  className="block text-white/90 hover:text-white transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Home
-                </CutomRouter>
-
-                {menuItems[0].submenu.map((section) => (
-                  <div key={section.title} className="space-y-2">
-                    <CutomRouter href={section.href} className="block">
-                      <h3 className="text-white font-semibold mb-2 hover:text-[#3785CC] transition-colors">
-                        {section.title}
-                      </h3>
-                    </CutomRouter>
-                    {section.items.map((item) => (
-                      <CutomRouter
-                        key={item.name}
-                        href={item.href}
-                        className="block text-white/70 hover:text-white transition-colors py-2 pl-4"
-                        onClick={() => setIsOpen(false)}
+              <div className="px-4 py-6 space-y-1">
+                {navItems.map((item) => (
+                  item.title !== "Solutions" ? (
+                    <Link
+                      key={item.title}
+                      href={item.href}
+                      className={`block text-${pathname === item.href ? 'secondary' : 'gray-300'} hover:text-secondary transition-colors py-2`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        handleLinkClick(item.href);
+                      }}
+                    >
+                      {item.title}
+                    </Link>
+                  ) : (
+                    <div key={item.title} className="py-2">
+                      <button
+                        onClick={() => setMobileSolutionsDropdownOpen(!mobileSolutionsDropdownOpen)}
+                        className={`flex items-center w-full text-${
+                          pathname.startsWith('/solutions') ? 'secondary' : 'gray-300'
+                        } hover:text-secondary transition-colors`}
                       >
-                        {item.name}
-                      </CutomRouter>
-                    ))}
-                  </div>
+                        <span>Solutions</span>
+                        <span>
+                          {mobileSolutionsDropdownOpen ? (
+                            <ChevronUp className="ml-1 h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="ml-1 h-4 w-4" />
+                          )}
+                        </span>
+                      </button>
+                      
+                      {/* <AnimatePresence>
+                        {mobileSolutionsDropdownOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="ml-4 mt-2 space-y-1"
+                          >
+                            {solutionItems.flatMap(category => 
+                              category.items.map((item, idx) => (
+                                <Link
+                                  key={idx}
+                                  href={item.href}
+                                  className="block text-gray-300 hover:text-secondary transition-colors py-2"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setIsOpen(false);
+                                    handleLinkClick(item.href);
+                                  }}
+                                >
+                                  {item.title}
+                                </Link>
+                              ))
+                            )}
+                            <Link
+                              href="/solutions"
+                              className="block text-secondary font-medium py-2"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setIsOpen(false);
+                                handleLinkClick("/solutions");
+                              }}
+                            >
+                              View All Solutions
+                            </Link>
+                          </motion.div>
+                        )}
+                      </AnimatePresence> */}
+                    </div>
+                  )
                 ))}
-
-                <CutomRouter
-                  href="/about"
-                  className="block text-white/90 hover:text-white transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  About Us
-                </CutomRouter>
-
-                <CutomRouter
-                  href="/blogs"
-                  className="block text-white/90 hover:text-white transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Blog
-                </CutomRouter>
-
-                <CutomRouter
-                  href="/contact"
-                  className="block px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-center"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Contact Us
-                </CutomRouter>
+                
+                <div className="pt-4 mt-2 border-t border-secondary/20">
+                  <Link
+                    href="/contact"
+                    className="block w-full text-center px-4 py-2 font-medium rounded-md text-primary bg-secondary hover:opacity-90 transition-all"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsOpen(false);
+                      handleLinkClick("/contact");
+                    }}
+                  >
+                    Contact Us
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}

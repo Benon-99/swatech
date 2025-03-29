@@ -1,339 +1,279 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
-  Globe,
-  Target,
-  Compass,
-  Shield,
-  Users,
-  Heart,
+  Zap,
+  Clock,
+  BarChart4,
+  HeadphonesIcon,
   ArrowRight,
+  CheckCircle2,
+  Shield,
+  Lock,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import * as LucideIcons from "lucide-react";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "../../lib/api";
+import { useState, useEffect } from "react";
+import dynamic from 'next/dynamic';
 
-const fetchingAbout = async () => {
-  const response = await apiClient.get("/about/");
-  console.log(response.data.about);
-  const obj = Object.entries(response.data.about);
-  console.log(obj);
-  return await response.data.about;
+// Fetch about data from API
+const fetchAboutData = async () => {
+  try {
+    const response = await apiClient.get("/about/");
+    return response.data.about;
+  } catch (error) {
+    console.error("Error fetching about data:", error);
+    return null;
+  }
 };
 
+// Interface for dynamic API response
+interface AboutResponse {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  img: string;
+  mission: string;
+  vision: string;
+  commitments: Commitment[];
+  stats: Stat[];
+}
+
+interface Commitment {
+  id: number;
+  icon: string;
+  title: string;
+  text: string;
+}
+
+interface Stat {
+  id: number;
+  number: string;
+  label: string;
+}
+
+// Default values if API data is not available
+const defaultAboutData = {
+  title: "Who We Are",
+  subtitle: "SwaTech is a leading provider of AI-driven security solutions.",
+  mission: "To revolutionize security with AI-powered analytics and real-time threat detection.",
+  vision: "A future where security is predictive, proactive, and seamlessly integrated into daily life.",
+  img: "/about1.webp",
+  commitments: [
+    {
+      id: 1,
+      icon: "Zap",
+      title: "Innovation",
+      text: "Pioneering AI-driven security solutions.",
+    },
+    {
+      id: 2,
+      icon: "Clock",
+      title: "Reliability",
+      text: "High-performance, 24/7 operational efficiency.",
+    },
+    {
+      id: 3,
+      icon: "BarChart4",
+      title: "Scalability",
+      text: "Solutions tailored for enterprises and government entities.",
+    },
+    {
+      id: 4,
+      icon: "HeadphonesIcon",
+      title: "Customer Success",
+      text: "End-to-end support and integration services.",
+    },
+  ],
+  stats: [
+    { id: 1, number: "15+", label: "Years Experience" },
+    { id: 2, number: "200+", label: "Projects Completed" },
+    { id: 3, number: "50+", label: "Expert Team Members" },
+    { id: 4, number: "98%", label: "Client Satisfaction" },
+  ],
+};
+
+// Dynamic icon component
+const DynamicIcon = ({ iconName }: { iconName: string }) => {
+  if (!iconName) return null;
+  const Icon = LucideIcons[iconName as keyof typeof LucideIcons] as React.ElementType;
+  return Icon ? <Icon className="w-6 h-6" /> : null;
+};
+
+// Optimized loading skeleton
+const LoadingSkeleton = () => (
+  <div className="flex justify-center items-center py-12">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3785CC]"></div>
+  </div>
+);
+
+// Dynamically import components with Next.js dynamic
+const MissionVisionSection = dynamic(() => import('../../components/about/MissionVisionSection'), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false
+});
+
+const CommitmentsSection = dynamic(() => import('../../components/about/CommitmentsSection'), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false
+});
+
+const AchievementsSection = dynamic(() => import('../../components/about/AchievementsSection'), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false
+});
+
+const FeaturesSection = dynamic(() => import('../../components/about/FeaturesSection'), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false
+});
+
+const CTASection = dynamic(() => import('../../components/about/CTASection'), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false
+});
+
 export default function AboutPage() {
-  const { data, isLoading, isPending, error } = useQuery({
+  // Progressive loading state
+  const [isClient, setIsClient] = useState(false);
+  
+  // Set isClient to true once component mounts
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Fetch data using TanStack Query with better caching
+  const { data, isLoading } = useQuery({
     queryKey: ["about"],
-    queryFn: fetchingAbout,
+    queryFn: fetchAboutData,
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    retry: 1, // Only retry once on failure
   });
 
-  const DynamicIcon = ({ iconName }: { iconName: string }) => {
-    const Icon = LucideIcons[
-      iconName as keyof typeof LucideIcons
-    ] as React.ElementType;
-    return Icon ? <Icon className="w-8 h-8 text-white" /> : null;
-  };
-
-  interface AboutResponse {
-    status: string;
-    about: About;
-  }
-
-  interface About {
-    id: number;
-    title: string;
-    subtitle: string;
-    description: string[];
-    img: string;
-    mission: string;
-    vision: string;
-    values: Value[];
-    stats: Stat[];
-  }
-
-  interface Value {
-    id: number;
-    icon: keyof typeof LucideIcons;
-    title: string;
-    text: string;
-    aboutId: number;
-  }
-
-  interface Stat {
-    id: number;
-    number: string;
-    label: string;
-    aboutId: number;
-  }
-
-  const values = [
-    {
-      icon: Globe,
-      title: "Global Standards",
-      text: "UN Global Compact signatory since 2023",
-      gradient: "from-[#3785CC] to-[#4A9BE4]",
-    },
-    {
-      icon: Target,
-      title: "Mission-Driven",
-      text: "Preferred strategic partner for consultancy and services",
-      gradient: "from-[#4A9BE4] to-[#5B8AF0]",
-    },
-    {
-      icon: Compass,
-      title: "Clear Vision",
-      text: "Driving innovation and exceptional performance",
-      gradient: "from-[#5B8AF0] to-[#8590EA]",
-    },
-    {
-      icon: Shield,
-      title: "Strong Ethics",
-      text: "Highest standards of integrity and professionalism",
-      gradient: "from-[#8590EA] to-[#B5C6F4]",
-    },
-    {
-      icon: Users,
-      title: "Client Focus",
-      text: "Building lasting partnerships through collaboration",
-      gradient: "from-[#3785CC] to-[#5B8AF0]",
-    },
-    {
-      icon: Heart,
-      title: "Core Values",
-      text: "Transparency, respect, innovation, and unwavering commitment to excellence",
-      gradient: "from-[#4A9BE4] to-[#B5C6F4]",
-    },
-  ];
-
-  const stats = [
-    { number: "15+", label: "Years Experience" },
-    { number: "200+", label: "Projects Completed" },
-    { number: "50+", label: "Expert Team Members" },
-    { number: "98%", label: "Client Satisfaction" },
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
+  // Use API data if available, otherwise use default data
+  const aboutData = data || defaultAboutData;
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section - Dark */}
-      <div className="relative overflow-hidden bg-[#111240]">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-full h-full bg-[url('/noise.png')] opacity-20"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#181c52] via-[#181c52] to-[#3785CC] animate-gradient"></div>
-        </div>
+    <div className="min-h-screen bg-dark">
+      {/* Hero Section - Cybersecurity Theme */}
+      <div className="relative h-[80vh] overflow-hidden bg-dark cyber-scanline">
+        {isClient && (
+          <>
+            {/* Cybersecurity-themed background */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute inset-0 cyber-grid opacity-10"></div>
+              <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-soft-light"></div>
+              
+              {/* Glow effects */}
+              <motion.div 
+                className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-secondary/10 filter blur-[100px]"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.2, 0.3, 0.2],
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity,
+                  ease: "easeInOut" 
+                }}
+              />
+              
+              <motion.div 
+                className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-accent/10 filter blur-[100px]"
+                animate={{ 
+                  scale: [1, 1.3, 1],
+                  opacity: [0.15, 0.25, 0.15],
+                }}
+                transition={{ 
+                  duration: 8, 
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 2
+                }}
+              />
 
-        {data && (
-          <div className="relative container mx-auto px-4 py-32">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="px-4 py-1.5 rounded-full text-sm font-medium bg-white/10 text-white/80 backdrop-blur-sm mb-6 inline-block"
-              >
-                About Us
-              </motion.span>
-              <h1 className="text-6xl font-bold bg-gradient-to-r from-white via-purple-100 to-white/80 bg-clip-text text-transparent mb-6">
-                {data.title}
-              </h1>
-              <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                {data.subtitle}
-              </p>
-            </motion.div>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content - Light */}
-      <div className="bg-white relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-full h-full bg-[url('/noise.png')] opacity-5"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#3785CC]/5 via-[#5B8AF0]/5 to-[#8590EA]/5 animate-gradient"></div>
-        </div>
-
-        <div className="container mx-auto px-4 py-24 relative">
-          <motion.div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-16"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {/* Company History */}
-            <motion.div variants={itemVariants} className="space-y-8">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] rounded-2xl blur-2xl group-hover:blur-3xl transition-all duration-500 opacity-20"></div>
-                <div className="relative rounded-2xl overflow-hidden">
-                  <Image
-                    src={data?.img}
-                    alt="IC&I Office"
-                    width={800}
-                    height={600}
-                    className="w-full aspect-[4/3] object-cover transform group-hover:scale-110 transition-transform duration-700"
-                  />
-                </div>
+              {/* Data flow lines */}
+              <div className="absolute left-20 top-0 bottom-0">
+                <div className="data-flow h-full"></div>
               </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {data &&
-                  data.stats &&
-                  data.stats.map((stat: Stat, index: number) => (
-                    <motion.div
-                      key={index}
-                      variants={itemVariants}
-                      className="p-6 rounded-xl bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors duration-300"
-                    >
-                      <div className="text-3xl font-bold bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] bg-clip-text text-transparent mb-2">
-                        {stat.number}
-                      </div>
-                      <div className="text-[#111240]/60 text-sm">
-                        {stat.label}
-                      </div>
-                    </motion.div>
-                  ))}
+              <div className="absolute right-1/3 top-0 bottom-0">
+                <div className="data-flow h-full" style={{animationDelay: '1.2s'}}></div>
               </div>
-            </motion.div>
-
-            {/* Story Content */}
-            <motion.div variants={itemVariants} className="space-y-8">
-              <div className="space-y-6">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] bg-clip-text text-transparent">
-                  Our Story
-                </h2>
-                <div className="space-y-4 text-[#111240]/70 text-lg leading-relaxed">
-                  <p>{data?.description}</p>
-                  {/* <p>
-                    Over the years, IC&I has built a strong reputation for
-                    delivering exceptional services and achieving remarkable
-                    results. Our dedication to excellence is reflected in the
-                    trust and loyalty we have earned from a wide range of
-                    clients.
-                  </p>
-                  <p>
-                    With a presence across all Syrian governorates and main
-                    offices in Damascus, Aleppo, Homs, Lattakia, and
-                    Dara&apos;a, we are strategically positioned to offer
-                    top-tier services wherever they are needed.
-                  </p> */}
-                </div>
-              </div>
-
-              {/* Mission & Vision */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-8 rounded-2xl bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all duration-300">
-                  <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] bg-clip-text text-transparent">
-                    Our Mission
-                  </h3>
-                  <p className="text-[#111240]/70">{data?.mission}</p>
-                </div>
-                <div className="p-8 rounded-2xl bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all duration-300">
-                  <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-[#4A9BE4] to-[#8590EA] bg-clip-text text-transparent">
-                    Our Vision
-                  </h3>
-                  <p className="text-[#111240]/70">{data?.vision}</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Values Section - Dark */}
-      <div className="relative overflow-hidden bg-[#111240]">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-full h-full bg-[url('/noise.png')] opacity-20"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#181c52] via-[#181c52] to-[#3785CC] animate-gradient"></div>
-        </div>
-
-        <div className="container mx-auto px-4 py-32 relative">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <div className="text-center mb-16">
-              <motion.span
-                variants={itemVariants}
-                className="px-4 py-1.5 rounded-full text-sm font-medium bg-white/10 text-white/80 backdrop-blur-sm mb-4 inline-block"
-              >
-                Our Values
-              </motion.span>
-              <motion.h2
-                variants={itemVariants}
-                className="text-4xl font-bold mb-6 bg-gradient-to-r from-white via-purple-100 to-white/80 bg-clip-text text-transparent"
-              >
-                What Drives Us
-              </motion.h2>
-              <motion.p
-                variants={itemVariants}
-                className="text-xl text-white/80 max-w-2xl mx-auto"
-              >
-                Our core values shape everything we do and guide us in
-                delivering excellence
-              </motion.p>
             </div>
 
-            <motion.div
-              variants={containerVariants}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
-            >
-              {data &&
-                data.values &&
-                data.values.map((value: Value, index: number) => {
-                  return (
-                    <motion.div
-                      key={value.title}
-                      variants={itemVariants}
-                      className="group relative"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl transform rotate-1 scale-[1.02] opacity-50 group-hover:rotate-2 transition-transform duration-300"></div>
-                      <div className="relative p-8 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 hover:bg-white/25 transition-all duration-300">
-                        <div
-                          className={`p-4 rounded-xl bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] transform group-hover:scale-110 transition-transform duration-300 mb-6 w-16 h-16 flex items-center justify-center`}
-                        >
-                          <DynamicIcon iconName={value.icon} />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white mb-4">
-                          {value.title}
-                        </h3>
-                        <p className="text-white/80">{value.text}</p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-            </motion.div>
-          </motion.div>
+            {/* Floating security icons */}
+            <div className="absolute top-20 right-20 opacity-10">
+              <LucideIcons.Shield className="w-32 h-32 text-secondary" />
+            </div>
+            <div className="absolute bottom-20 left-20 opacity-10">
+              <LucideIcons.Lock className="w-24 h-24 text-secondary" />
+            </div>
+          </>
+        )}
+        
+        {/* Content Container */}
+        <div className="relative z-10 container mx-auto px-6 h-full flex flex-col justify-center">
+          <div className="max-w-4xl">
+            <div>
+              <div className="inline-block relative mb-6">
+                <div className="absolute -inset-1 bg-gradient-to-r from-secondary/20 to-accent/20 rounded-lg blur"></div>
+                <span className="relative px-4 py-1.5 bg-dark text-secondary text-sm font-mono rounded-lg inline-block">
+                  about_sys.segment
+                </span>
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+                <span className="text-gradient">{aboutData.title}</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-300 max-w-2xl">
+                {aboutData.subtitle}
+              </p>
+              
+              <div className="mt-10">
+                <Link 
+                  href="/solutions"
+                  className="inline-flex items-center gap-2 bg-secondary text-primary px-8 py-4 rounded-lg hover:opacity-90 transition-all duration-300 shadow-lg font-medium cyber-pulse"
+                >
+                  Discover Our Solutions
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Binary code pattern */}
+        <div className="absolute bottom-10 right-10 opacity-20 text-secondary font-mono text-xs leading-none hidden md:block">
+          01000111<br />
+          10100101<br />
+          00101101
+        </div>
+        
+        {/* Terminal-like section */}
+        <div className="absolute top-10 left-10 cyber-card p-3 rounded opacity-20 hidden md:block">
+          <div className="flex items-center space-x-2 text-secondary text-xs font-mono">
+            <div className="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+            <span>security_profile_active</span>
+          </div>
         </div>
       </div>
+
+      {/* Progressive loading sections */}
+      {isClient && (
+        <>
+          <MissionVisionSection aboutData={aboutData} />
+          <CommitmentsSection commitments={aboutData.commitments} />
+          <AchievementsSection stats={aboutData.stats} />
+          <FeaturesSection />
+          <CTASection />
+        </>
+      )}
     </div>
   );
 }

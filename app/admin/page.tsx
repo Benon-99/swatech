@@ -24,8 +24,8 @@ export default function AdminDashboard() {
     const checkAuth = async () => {
       try {
         const data = await apiClient.post("/api/auth/login", {
-          email: "icandicompany@gmail.com",
-          password: "IC&I@admin2024",
+          email: "admin@swatech.com",
+          password: "SwaTech@admin2024",
         });
 
         console.log("Auth response:", data);

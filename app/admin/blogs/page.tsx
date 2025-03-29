@@ -1,438 +1,220 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Pencil, Trash2, Plus, Search, RefreshCw, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import {
-  Pencil,
-  Trash2,
-  Plus,
-  Search,
-  Filter,
-  Clock,
-  Eye,
-  Image as ImageIcon,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface Author {
-  id: number;
-  name: string;
-  email: string;
-}
-
-interface Blog {
-  id: number;
-  title: string;
-  content: string;
-  slug: string;
-  date: string;
-  image: string;
-  published: boolean;
-  category: Category;
-  author: Author;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Alert {
-  type: "success" | "error" | "info";
-  message: string;
-}
-
-export default function BlogsPage() {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+export default function BlogsAdminPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
-  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
-  const [alert, setAlert] = useState<Alert | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{
-    show: boolean;
-    blogId: number | null;
-  }>({
-    show: false,
-    blogId: null,
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [alert, setAlert] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Fetch blogs data
+  const { data: blogs, isLoading, isError, refetch } = useQuery({
+    queryKey: ["blogs"],
+    queryFn: async () => {
+      const response = await apiClient.get("/blogs");
+      return response.data.blogs || [];
+    }
   });
 
-  useEffect(() => {
-    fetchBlogs();
-    fetchCategories();
-  }, []);
-  useEffect(() => {
-    console.log(blogs);
-  }, [blogs]);
-
-  useEffect(() => {
-    if (alert) {
-      const timer = setTimeout(() => setAlert(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [alert]);
-
-  const showAlert = (type: Alert["type"], message: string) => {
-    setAlert({ type, message });
-  };
-
-  const fetchBlogs = async () => {
-    try {
-      const response = await apiClient.get("/api/blog");
-      console.log(response);
-
-      if (response.statusText.toLowerCase() != "ok") {
-        throw new Error("Failed to fetch blogs");
-      }
-      setBlogs(response.data.posts || []);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      showAlert("error", "Failed to fetch blogs");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await apiClient.get("/api/blog/categories");
-      setCategories(response.data.categories || []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
-
-  const initiateDelete = (id: number) => {
-    setDeleteConfirm({ show: true, blogId: id });
-  };
-
-  const handleDelete = async () => {
-    if (!deleteConfirm.blogId) return;
-
-    try {
-      const response = await apiClient.delete(
-        `/api/blog/post/${deleteConfirm.blogId}`
-      );
-
-      if (response.statusText.toLowerCase() == "ok") {
-        setBlogs(blogs.filter((blog) => blog.id !== deleteConfirm.blogId));
-        showAlert("success", "Blog post deleted successfully");
-      } else {
-        throw new Error("Failed to delete blog post");
-      }
-    } catch (error) {
+  // Delete blog mutation
+  const deleteBlog = useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/blogs/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      setAlert({ message: "Blog deleted successfully", type: "success" });
+      setTimeout(() => setAlert(null), 3000);
+    },
+    onError: (error) => {
       console.error("Error deleting blog:", error);
-      showAlert("error", "Failed to delete blog post");
-    } finally {
-      setDeleteConfirm({ show: false, blogId: null });
+      setAlert({ message: "Failed to delete blog", type: "error" });
+      setTimeout(() => setAlert(null), 3000);
+    },
+    onSettled: () => {
+      setIsDeleting(null);
+    }
+  });
+
+  // Handle delete confirmation
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this blog post?")) {
+      setIsDeleting(id);
+      deleteBlog.mutate(id);
     }
   };
 
-  const filteredBlogs = blogs
-    .filter((blog) => {
-      if (filter === "published") return blog.published;
-      if (filter === "draft") return !blog.published;
-      return true;
-    })
-    .filter((blog) => {
-      if (categoryFilter === "all") return true;
-      return blog.category.id === categoryFilter;
-    })
-    .filter(
-      (blog) =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
+  // Filter blogs based on search term
+  const filteredBlogs = blogs?.filter(blog => 
+    blog.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    blog.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f1035] to-[#2e3267] p-8">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto"
-      >
-        {/* Delete Confirmation Modal */}
-        {deleteConfirm.show && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#1a1f4b] rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="h-6 w-6 text-yellow-500" />
-                <h3 className="text-xl font-semibold text-white">
-                  Delete Blog Post?
-                </h3>
-              </div>
-              <p className="text-gray-300 mb-6">
-                This action cannot be undone. The blog post will be permanently
-                removed from the system.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() =>
-                    setDeleteConfirm({ show: false, blogId: null })
-                  }
-                  className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                >
-                  Delete Post
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Alert Component */}
-        <AnimatePresence mode="wait">
-          {alert && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg flex items-center space-x-2 z-50 ${
-                alert.type === "success"
-                  ? "bg-green-500"
-                  : alert.type === "error"
-                  ? "bg-red-500"
-                  : "bg-blue-500"
-              }`}
-            >
-              {alert.type === "success" && (
-                <CheckCircle className="w-5 h-5 text-white" />
-              )}
-              {alert.type === "error" && (
-                <XCircle className="w-5 h-5 text-white" />
-              )}
-              {alert.type === "info" && (
-                <AlertCircle className="w-5 h-5 text-white" />
-              )}
-              <p className="text-white font-medium">{alert.message}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Header Section */}
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Blog Management
-            </h1>
-            <p className="text-gray-400">Manage and organize your blog posts</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Blog Management</h1>
+            <p className="text-gray-300">Create, edit, and manage your blog posts</p>
           </div>
-          <Link
-            href="/admin/blogs/new"
-            className="group bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105"
-          >
-            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-            Create New Post
+
+          <Link href="/admin/blogs/new" className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-md flex items-center transition-colors duration-200">
+            <Plus className="mr-2 h-4 w-4" />
+            New Blog Post
           </Link>
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="bg-[#1a1f4b] rounded-xl p-6 mb-8 shadow-lg">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        {/* Alert */}
+        {alert && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`mb-6 p-4 rounded-md ${
+              alert.type === "success" ? "bg-green-500/10 border border-green-500/20 text-green-500" : 
+              "bg-red-500/10 border border-red-500/20 text-red-500"
+            }`}
+          >
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <p>{alert.message}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Search and filter */}
+        <div className="bg-white/5 backdrop-blur-sm p-4 rounded-lg mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 type="text"
                 placeholder="Search blogs..."
+                className="block w-full bg-white/10 border border-gray-600 rounded-md py-2 pl-10 pr-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-[#2e3267] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div className="flex gap-2">
-              <select
-                value={categoryFilter}
-                onChange={(e) =>
-                  setCategoryFilter(
-                    e.target.value === "all" ? "all" : Number(e.target.value)
-                  )
-                }
-                className="px-4 py-2 bg-[#2e3267] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => setFilter("all")}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  filter === "all"
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#2e3267] text-gray-400 hover:bg-[#363b7e]"
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter("published")}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  filter === "published"
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#2e3267] text-gray-400 hover:bg-[#363b7e]"
-                }`}
-              >
-                Published
-              </button>
-              <button
-                onClick={() => setFilter("draft")}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  filter === "draft"
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#2e3267] text-gray-400 hover:bg-[#363b7e]"
-                }`}
-              >
-                Drafts
-              </button>
-            </div>
+            <button 
+              onClick={() => refetch()} 
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-md text-gray-300"
+              title="Refresh"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
-        {/* Blog Posts Grid */}
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <AnimatePresence>
-              {filteredBlogs.map((blog) => (
-                <motion.div
-                  key={blog.id}
-                  variants={itemVariants}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="bg-[#1a1f4b] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300"
-                >
-                  {blog.image && (
-                    <div className="relative h-48 bg-gray-800">
-                      <img
-                        src={blog.image}
-                        alt={blog.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-xl font-semibold text-white mb-1">
-                          {blog.title}
-                        </h2>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-400">
-                            By {blog.author.name}
-                          </span>
-                          <span className="text-gray-600">•</span>
-                          <span className="text-blue-400">
-                            {blog.category.name}
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`ml-2 px-3 py-1 rounded-full text-xs font-medium ${
-                          blog.published
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {blog.published ? "Published" : "Draft"}
-                      </span>
-                    </div>
-
-                    <div className="text-gray-400 text-sm mb-4 line-clamp-2">
-                      {blog.content}
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm">
-                          {new Date(blog.date).toLocaleDateString()}
+        {/* Blogs List */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-400 rounded-full mb-4"></div>
+              <p className="text-gray-300">Loading blogs...</p>
+            </div>
+          ) : isError ? (
+            <div className="p-8 text-center text-red-400">
+              <AlertCircle className="h-10 w-10 mx-auto mb-2" />
+              <p>Failed to load blogs. Please try again.</p>
+              <button 
+                onClick={() => refetch()}
+                className="mt-4 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-md"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredBlogs?.length === 0 ? (
+            <div className="p-8 text-center text-gray-400">
+              {searchTerm ? (
+                <p>No blogs found matching &quot;{searchTerm}&quot;</p>
+              ) : (
+                <>
+                  <p className="mb-4">No blogs have been created yet</p>
+                  <Link href="/admin/blogs/new" className="text-blue-400 hover:text-blue-300">
+                    Create your first blog post
+                  </Link>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-800/50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Published Date
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredBlogs?.map((blog) => (
+                    <tr key={blog.id} className="hover:bg-white/5">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{blog.title}</div>
+                        <div className="text-sm text-gray-400 truncate max-w-xs">{blog.description}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          blog.status === 'published' ? 'bg-green-500/20 text-green-400' : 
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {blog.status || 'Draft'}
                         </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Link
-                          href={`/admin/blogs/edit/${blog.id}`}
-                          className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => initiateDelete(blog.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && filteredBlogs.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <div className="text-gray-400 mb-4">No blog posts found</div>
-            <Link
-              href="/admin/blogs/new"
-              className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
-            >
-              <Plus className="w-4 h-4" />
-              Create your first post
-            </Link>
-          </motion.div>
-        )}
-      </motion.div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <Link 
+                            href={`/admin/blogs/edit/${blog.id}`}
+                            className="text-blue-400 hover:text-blue-300 p-1"
+                          >
+                            <Pencil className="h-5 w-5" />
+                          </Link>
+                          <button
+                            className="text-red-400 hover:text-red-300 p-1"
+                            onClick={() => handleDelete(blog.id)}
+                            disabled={isDeleting === blog.id}
+                          >
+                            {isDeleting === blog.id ? (
+                              <div className="h-5 w-5 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
+                            ) : (
+                              <Trash2 className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

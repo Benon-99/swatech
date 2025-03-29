@@ -3,18 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --primary: #002060;
-  --secondary: #B5C6F4;
+  --primary: #050C24;
+  --secondary: #0EF6CC;
+  --accent: #FF003C;
+  --dark: #0A0E1A;
+  --light: #F0F4FF;
+  --cyber-glow: rgba(14, 246, 204, 0.5);
 }
 
 @layer base {
   body {
-    @apply text-gray-800 overflow-x-hidden;
+    @apply text-gray-200 bg-dark overflow-x-hidden;
+    background-color: var(--dark);
   }
 
   input, textarea {
     @apply outline-none;
   }
+}
+
+.bg-dark {
+  background-color: var(--dark);
 }
 
 .gradient-blur {
@@ -23,14 +32,39 @@
     var(--secondary) 0%,
     transparent 70%
   );
-  opacity: 0.1;
+  opacity: 0.15;
   filter: blur(40px);
 }
 
 .text-gradient {
-  background: linear-gradient(to right, var(--primary), var(--secondary));
+  background: linear-gradient(to right, var(--secondary), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.cyber-border {
+  position: relative;
+  border: 1px solid rgba(14, 246, 204, 0.3);
+  box-shadow: 0 0 15px 0 rgba(14, 246, 204, 0.2);
+}
+
+.cyber-border::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 60%, var(--secondary) 100%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.cyber-card {
+  background: rgba(5, 12, 36, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(14, 246, 204, 0.2);
+  box-shadow: 0 0 20px 0 rgba(14, 246, 204, 0.1);
 }
 
 .hover-card {
@@ -39,6 +73,7 @@
 
 .hover-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 0 25px 0 rgba(14, 246, 204, 0.3);
 }
 
 .animate-fade-up {
@@ -56,36 +91,67 @@
   }
 }
 
+.cyber-grid {
+  background-image: 
+    linear-gradient(rgba(14, 246, 204, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 246, 204, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.cyber-scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-scanline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(14, 246, 204, 0.5);
+  opacity: 0.3;
+  animation: scanline 3s linear infinite;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100px);
+  }
+  100% {
+    transform: translateY(1000px);
+  }
+}
+
 /* Custom Swiper Styles */
 .swiper-pagination-bullet {
   width: 12px !important;
   height: 12px !important;
-  background: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(14, 246, 204, 0.2) !important;
   opacity: 1 !important;
 }
 
 .swiper-pagination-bullet-active {
-  background: var(--primary) !important;
+  background: var(--secondary) !important;
 }
 
 .swiper-button-prev,
 .swiper-button-next {
-  color: white !important;
+  color: var(--secondary) !important;
 }
 
 /* Contact Form Styles */
 .contact-input {
-  @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary 
-    focus:border-transparent transition-all;
+  @apply w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-900/50 focus:ring-2 focus:ring-secondary focus:border-transparent transition-all text-white;
 }
 
 .contact-button {
-  @apply bg-primary text-white px-8 py-3 rounded-lg hover:bg-secondary 
-    transition-colors duration-300 font-medium;
+  @apply bg-secondary text-primary px-8 py-3 rounded-lg hover:opacity-90 transition-colors duration-300 font-medium;
 }
 
 .contact-icon {
-  @apply w-6 h-6 text-primary;
+  @apply w-6 h-6 text-secondary;
 }
 
 /* Blog Card Styles */
@@ -94,4 +160,43 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Cybersecurity-themed elements */
+.data-flow {
+  background: linear-gradient(to bottom, transparent, var(--secondary), transparent);
+  width: 1px;
+  height: 100px;
+  opacity: 0.3;
+  animation: dataFlow 2s infinite linear;
+}
+
+@keyframes dataFlow {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.cyber-pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(14, 246, 204, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(14, 246, 204, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(14, 246, 204, 0);
+  }
 }
