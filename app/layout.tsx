@@ -21,7 +21,7 @@ export default function RootLayout({
         <QueryProvider>
           <LoadingProvider>
             <div className="flex flex-col min-h-screen bg-gray-50">
-              <Navbar />
+              {/* <Navbar /> */}
               <LayoutExtra />
               <main className="flex-grow">{children}</main>
             </div>

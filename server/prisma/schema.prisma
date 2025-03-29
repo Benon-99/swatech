@@ -128,3 +128,13 @@ model Stat {
   about   About  @relation(fields: [aboutId], references: [id])
   aboutId Int
 }
+
+model Solution {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  icon        String?  @db.VarChar(255)
+  image       String?  @db.VarChar(255)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}

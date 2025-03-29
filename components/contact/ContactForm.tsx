@@ -1,14 +1,12 @@
-import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import styled from "styled-components";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Lock, Shield, AlertCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
+import ReCAPTCHA from "react-google-recaptcha";
 
 // Define form data type
 interface FormData {
@@ -22,6 +20,12 @@ const ContactForm: React.FC = () => {
   const router = useRouter();
   const [isSending, setIsSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  
+  // reCAPTCHA site key - replace with your actual site key in production
+  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"; // This is Google's test key
 
   const validationSchema = Yup.object({
     name: Yup.string()
@@ -47,15 +51,39 @@ const ContactForm: React.FC = () => {
     resolver: yupResolver(validationSchema),
   });
 
-  // Form submission handler
+  // reCAPTCHA change handler
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
+    setCaptchaError(null);
+  };
+
+  // Form submission handler with reCAPTCHA verification
   const onSubmit = async (formData: FormData) => {
+    // Verify reCAPTCHA first
+    if (!recaptchaToken) {
+      setCaptchaError("Please verify that you are not a robot.");
+      return;
+    }
+    
+    // Clear any previous error
+    setCaptchaError(null);
     setIsSending(true);
+    
     try {
-      const response = await apiClient.post("/api/email/send-email", formData);
+      // In a production environment, you should verify the reCAPTCHA token on your backend
+      const response = await apiClient.post("/api/email/send-email", {
+        ...formData,
+        recaptchaToken // Include token for server-side verification
+      });
 
       if (response.status === 200) {
         setShowSuccess(true);
         reset();
+        // Reset reCAPTCHA
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset();
+        }
+        setRecaptchaToken(null);
         // Hide success message after 3 seconds
         setTimeout(() => {
           setShowSuccess(false);
@@ -71,201 +99,212 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <Container>
+    <div className="w-full bg-[#0a0d16] rounded-lg p-6 relative">
       <AnimatePresence>
         {showSuccess && (
-          <SuccessNotification
-            initial={{ opacity: 0, y: -50 }}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute -top-12 left-0 right-0 bg-green-500/20 backdrop-blur-sm border border-green-500/30 text-green-400 rounded-lg p-3 flex items-center gap-2 z-10"
           >
-            <CheckCircle2 size={20} />
-            Message sent successfully
-          </SuccessNotification>
+            <CheckCircle2 size={18} className="text-green-400" />
+            <span className="text-sm">Message sent successfully</span>
+          </motion.div>
         )}
       </AnimatePresence>
-      <FormWrapper
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit(onSubmit)(e);
-        }}
-      >
-        <Title>Contact Us</Title>
-        <Description>
-          We would love to hear from you! Fill out the form below.
-        </Description>
 
-        <InputWrapper>
-          <Input
+      {/* Form header */}
+      <div className="flex items-center justify-between mb-6 pb-2 border-b border-gray-700">
+        <div className="flex items-center gap-2 text-cyan-400 text-sm">
+          <Lock size={14} className="text-cyan-400" />
+          <span className="font-mono">secure_transmission_enabled</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Name field */}
+        <div>
+          <div className="flex justify-between mb-2">
+            <label htmlFor="name" className="text-white font-medium">
+              Full Name
+            </label>
+            <span className="text-cyan-400 text-sm font-mono">required</span>
+          </div>
+          <input
+            id="name"
             type="text"
-            placeholder="Your Name"
+            placeholder="Enter your name"
             {...register("name")}
-            $isError={!!errors.name}
+            className={`w-full bg-white text-gray-800 p-3 rounded-md focus:outline-none ${
+              errors.name ? "border-2 border-red-500" : ""
+            }`}
           />
-          {errors.name && <ErrorMessage>{errors.name?.message}</ErrorMessage>}
-        </InputWrapper>
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+          )}
+        </div>
 
-        <InputWrapper>
-          <Input
+        {/* Email field */}
+        <div>
+          <div className="flex justify-between mb-2">
+            <label htmlFor="email" className="text-white font-medium">
+              Email Address
+            </label>
+            <span className="text-cyan-400 text-sm font-mono">required</span>
+          </div>
+          <input
+            id="email"
             type="email"
-            placeholder="Your Email"
+            placeholder="Enter your email"
             {...register("email")}
-            $isError={!!errors.email}
+            className={`w-full bg-white text-gray-800 p-3 rounded-md focus:outline-none ${
+              errors.email ? "border-2 border-red-500" : ""
+            }`}
           />
-          {errors.email && <ErrorMessage>{errors.email?.message}</ErrorMessage>}
-        </InputWrapper>
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-        <InputWrapper>
-          <Input
+        {/* Subject field */}
+        <div>
+          <div className="flex justify-between mb-2">
+            <label htmlFor="subject" className="text-white font-medium">
+              Subject
+            </label>
+            <span className="text-cyan-400 text-sm font-mono">required</span>
+          </div>
+          <input
+            id="subject"
             type="text"
-            placeholder="Subject"
+            placeholder="What is this regarding?"
             {...register("subject")}
-            $isError={!!errors.subject}
+            className={`w-full bg-white text-gray-800 p-3 rounded-md focus:outline-none ${
+              errors.subject ? "border-2 border-red-500" : ""
+            }`}
           />
           {errors.subject && (
-            <ErrorMessage>{errors.subject?.message}</ErrorMessage>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.subject.message}
+            </p>
           )}
-        </InputWrapper>
+        </div>
 
-        <InputWrapper>
-          <Textarea
-            placeholder="Your Message"
+        {/* Message field */}
+        <div>
+          <div className="flex justify-between mb-2">
+            <label htmlFor="message" className="text-white font-medium">
+              Message
+            </label>
+            <span className="text-cyan-400 text-sm font-mono">required</span>
+          </div>
+          <textarea
+            id="message"
+            placeholder="How can we assist with your security needs?"
+            rows={5}
             {...register("message")}
-            $isError={!!errors.message}
-          />
+            className={`w-full bg-white text-gray-800 p-3 rounded-md focus:outline-none resize-none ${
+              errors.message ? "border-2 border-red-500" : ""
+            }`}
+          ></textarea>
           {errors.message && (
-            <ErrorMessage>{errors.message?.message}</ErrorMessage>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.message.message}
+            </p>
           )}
-        </InputWrapper>
+        </div>
 
-        <SubmitButton type="submit" disabled={isSending}>
-          {isSending ? "Sending..." : "Send Message"}
-        </SubmitButton>
-      </FormWrapper>
-    </Container>
+        {/* reCAPTCHA field */}
+        <div>
+          <div className="flex justify-between mb-2">
+            <label className="text-white font-medium">
+              Security Verification
+            </label>
+            <span className="text-cyan-400 text-sm font-mono">required</span>
+          </div>
+          
+          <div className="bg-[#141824] border border-gray-700 rounded-md p-4">
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleRecaptchaChange}
+                theme="dark"
+                className="mx-auto transform scale-90 sm:scale-100"
+              />
+            </div>
+            
+            {captchaError && (
+              <p className="text-red-500 text-sm mt-4 flex items-center gap-1 justify-center">
+                <AlertCircle size={14} className="flex-shrink-0" />
+                {captchaError}
+              </p>
+            )}
+            
+            <p className="text-gray-400 text-xs mt-4 flex items-start gap-2">
+              <span className="text-cyan-400 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+              </span>
+              <span>
+                This security verification helps us ensure you are not a bot. Your data is processed securely.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* Security notice */}
+        <div className="flex items-center gap-2 text-gray-400 text-sm">
+          <Shield size={14} className="text-cyan-400" />
+          <span>All communications are encrypted and secure</span>
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={isSending || !recaptchaToken}
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-md font-medium hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
+        >
+          {isSending ? (
+            <span className="flex items-center justify-center">
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Sending...
+            </span>
+          ) : (
+            "Send Secure Message"
+          )}
+        </button>
+      </form>
+    </div>
   );
 };
 
 export default ContactForm;
-
-// Styled-components for design (same as before)
-const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 50vh;
-  background-color: transparent;
-  padding: 2rem;
-  margin-bottom: 60px;
-`;
-
-const FormWrapper = styled.form`
-  background: #ffffff;
-  max-width: 500px;
-  width: 100%;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.h2`
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #333333;
-  text-align: center;
-`;
-
-const Description = styled.p`
-  font-size: 0.9rem;
-  margin-bottom: 2rem;
-  color: #666666;
-  text-align: center;
-`;
-
-const InputWrapper = styled.div`
-  margin-bottom: 1.5rem;
-`;
-
-const Input = styled.input<{ $isError?: boolean }>`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ $isError }) => ($isError ? "#ff4d4f" : "#cccccc")};
-  border-radius: 6px;
-  font-size: 1rem;
-  outline: none;
-  background: ${({ $isError }) => ($isError ? "#ffeef0" : "#ffffff")};
-
-  &:focus {
-    border-color: ${({ $isError }) => ($isError ? "#ff4d4f" : "#9c3aaf")};
-  }
-`;
-
-const Textarea = styled.textarea<{ $isError?: boolean }>`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ $isError }) => ($isError ? "#ff4d4f" : "#cccccc")};
-  border-radius: 6px;
-  font-size: 1rem;
-  outline: none;
-  min-height: 100px;
-  background: ${({ $isError }) => ($isError ? "#ffeef0" : "#ffffff")};
-
-  &:focus {
-    border-color: ${({ $isError }) => ($isError ? "#ff4d4f" : "#9c3aaf")};
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: #ff4d4f;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-`;
-
-const SubmitButton = styled.button`
-  width: 100%; /* Full width */
-  padding: 1rem 2rem; /* Padding similar to */
-  font-size: 1rem; /* Font size */
-  font-weight: 500; /* Font medium */
-  color: #ffffff; /* Text color */
-  background: linear-gradient(
-    to right,
-    #3785cc,
-    #5b8af0
-  ); /* Gradient background */
-  border: none; /* No border */
-  border-radius: 0.5rem; /* Rounded corners similar to  */
-  display: inline-flex; /* Inline flex for proper alignment */
-  align-items: center; /* Center items vertically */
-  justify-content: center; /* Center items horizontally */
-  gap: 0.5rem; /* Spacing between items similar to  */
-  cursor: pointer; /* Pointer cursor on hover */
-  box-shadow: 0 0 0 transparent; /* Initial shadow */
-  transition: all 0.3s ease; /* Smooth transition */
-
-  &:hover {
-    box-shadow: 0 4px 10px rgba(55, 133, 204, 0.2); /* Shadow on hover */
-  }
-
-  &:disabled {
-    background: #cccccc; /* Disabled background color */
-    cursor: not-allowed; /* Disabled cursor */
-    box-shadow: none; /* Remove hover shadow when disabled */
-  }
-`;
-
-const SuccessNotification = styled(motion.div)`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #22c55e;
-  color: white;
-  padding: 16px 24px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 1000;
-`;

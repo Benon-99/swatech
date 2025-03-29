@@ -4,48 +4,46 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, Building2, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { MapPin, Phone, Mail, Linkedin, Twitter, Youtube, ChevronRight, Shield, Lock, Database } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const Footer = () => {  
-  console.log("Rendering Footer");
-
-  const footerLinks = {
-    businessOutsourcing: {
-      title: 'Business Outsourcing',
+  const quickLinksCategories = [
+    {
+      title: "Main",
       links: [
-        { text: 'HR Payroll & Performance Management', href: '/hr-payroll' },
-        { text: 'HR & Recruitment Management', href: '/hr-recruitment' },
-        { text: 'Jobs.ici – Recruiting', href: '/jobs-ici' },
-      ],
+        { text: 'Home', href: '/' },
+        { text: 'About Us', href: '/about' },
+        { text: 'Contact Us', href: '/contact' },
+      ]
     },
-    itSolutions: {
-      title: 'IT Solutions',
+    {
+      title: "Services",
       links: [
-        { text: 'Solutions Integration', href: '/solutions-integration' },
-        { text: 'Information Security', href: '/information-security' },
-        { text: 'Software Development', href: '/software-development' },
-        { text: 'Data Center Infrastructure', href: '/data-center' },
-      ],
+        { text: 'Solutions', href: '/solutions' },
+        
+      ]
     },
-  };
+    // {
+    //   title: "Resources",
+    //   links: [
+    //     { text: 'News', href: '/news' },
+    //     { text: 'Blog', href: '/blog' },
+    //     { text: 'Support', href: '/support' },
+    //   ]
+    // }
+  ];
 
-  const contactInfo = [
-    { Icon: MapPin, text: '90/3 Adawi Enshaat, Damascus, Syria.' },
-    { Icon: MapPin, text: '21/2051 Baladieh, Jaramana, Syria' },
-    { 
-      Icon: Phone, 
-      text: ['Phone: +963 44 20 567', 'Fax: +963 44 30 567'],
-      multiline: true 
-    },
-    { Icon: Mail, text: 'gd@ici-sy.com' },
+  const companyInfo = [
+    { Icon: MapPin, text: 'Headquarters: 90/3 Adawi Enshaat, Damascus, Syria' },
+    { Icon: Mail, text: 'Email: info@swatech.com' },
+    { Icon: Phone, text: 'Phone: +963 44 20 567' },
   ];
 
   const socialLinks = [
-    { Icon: Facebook, href: '#', label: 'Facebook' },
-    { Icon: Twitter, href: '#', label: 'Twitter' },
     { Icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { Icon: Instagram, href: '#', label: 'Instagram' },
+    { Icon: Twitter, href: '#', label: 'Twitter' },
+    { Icon: Youtube, href: '#', label: 'YouTube' },
   ];
 
   const containerVariants = {
@@ -67,6 +65,7 @@ const Footer = () => {
       transition: { duration: 0.5 },
     },
   };
+  
   const pathname = usePathname();
 
   if (pathname.startsWith('/admin') || pathname.startsWith('/blogs/')) {
@@ -74,11 +73,24 @@ const Footer = () => {
   }
   
   return (
-    <footer className="bg-gradient-to-b from-[#111240] to-[#0A0C2E] relative overflow-hidden">
+    <footer className="bg-dark relative overflow-hidden cyber-scanline">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-full h-full bg-[url('/noise.png')] opacity-10"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#3785CC]/10 via-[#5B8AF0]/10 to-[#8590EA]/10 animate-gradient"></div>
+        <div className="absolute w-full h-full cyber-grid opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-soft-light"></div>
+        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-secondary/5 rounded-full filter blur-[100px]"></div>
+        <div className="absolute top-1/3 right-1/4 w-60 h-60 bg-accent/5 rounded-full filter blur-[80px]"></div>
+        
+        {/* Data flow lines */}
+        <div className="absolute left-10 top-0 bottom-0">
+          <div className="data-flow h-full"></div>
+        </div>
+        <div className="absolute right-1/3 top-0 bottom-0">
+          <div className="data-flow h-full"></div>
+        </div>
+        <div className="absolute right-1/4 top-0 bottom-0">
+          <div className="data-flow h-full" style={{animationDelay: '1s'}}></div>
+        </div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,94 +100,87 @@ const Footer = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 py-16"
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-12 py-16"
         >
           {/* Company Info */}
           <motion.div variants={itemVariants} className="space-y-6">
-            <Link href="/" className="block">
-              <Image 
-                src="/logo_ow.webp" 
-                alt="IC&I Logo" 
-                width={140}
-                height={56}
-                className="h-14 w-auto"
-              />
+            <Link href="/" className="block group">
+              <div className="relative">
+                <Image 
+                  src="/logo_ow.webp" 
+                  alt="SwaTech Logo" 
+                  width={140}
+                  height={56}
+                  className="h-14 w-auto group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-secondary/20 filter blur-xl rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+              </div>
             </Link>
-            <p className="text-white/80 text-sm leading-relaxed">
-              Information Consultancies & Installations (IC&I) is a leading provider of ICT solutions and business outsourcing services in Syria.
+            <p className="text-gray-300 text-sm leading-relaxed">
+              SwaTech is a leading provider of innovative technology solutions and services, empowering businesses to thrive in the digital era.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (
                 <Link
                   key={social.label}
                   href={social.href}
-                  className="p-2 rounded-full bg-[#3785CC]/10 hover:bg-[#3785CC]/20 border border-[#3785CC]/20 
-                    transition-colors duration-300 group"
+                  className="p-2 rounded-full cyber-border bg-dark hover:opacity-90
+                    transition-all duration-300 group"
                   aria-label={social.label}
                 >
-                  <social.Icon className="w-5 h-5 text-white/80 group-hover:text-white transition-colors duration-300" />
+                  <social.Icon className="w-5 h-5 text-secondary/80 group-hover:text-secondary transition-colors duration-300" />
                 </Link>
               ))}
             </div>
           </motion.div>
 
-          {/* Business Outsourcing */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <h3 className="text-lg font-semibold text-white bg-gradient-to-r from-[#3785CC] to-[#4A9BE4] bg-clip-text text-transparent">{footerLinks.businessOutsourcing.title}</h3>
-            <ul className="space-y-3">
-              {footerLinks.businessOutsourcing.links.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="group flex items-center text-white/80 hover:text-white transition-colors duration-300"
-                  >
-                    <span>{link.text}</span>
-                  </Link>
-                </li>
+          {/* Quick Links - Organized by Categories */}
+          <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 lg:col-span-1">
+            <h3 className="text-lg font-semibold text-gradient mb-6">Quick Links</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {quickLinksCategories.map((category, index) => (
+                <div key={index} className="space-y-4">
+                  <h4 className="text-secondary font-medium text-sm">{category.title}</h4>
+                  <ul className="space-y-2">
+                    {category.links.map((link) => (
+                      <li key={link.href}>
+                        <Link 
+                          href={link.href}
+                          className="group flex items-center text-gray-300 hover:text-secondary transition-colors duration-300 text-sm"
+                        >
+                          <ChevronRight className="w-3 h-3 mr-1 text-secondary/70" />
+                          <span>{link.text}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </motion.div>
 
-          {/* IT Solutions */}
+          {/* Company Information */}
           <motion.div variants={itemVariants} className="space-y-6">
-            <h3 className="text-lg font-semibold text-white bg-gradient-to-r from-[#4A9BE4] to-[#8590EA] bg-clip-text text-transparent">{footerLinks.itSolutions.title}</h3>
-            <ul className="space-y-3">
-              {footerLinks.itSolutions.links.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="group flex items-center text-white/80 hover:text-white transition-colors duration-300"
-                  >
-                    <span>{link.text}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Contact Info */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <h3 className="text-lg font-semibold text-white bg-gradient-to-r from-[#8590EA] to-[#B5C6F4] bg-clip-text text-transparent">Contact Info</h3>
+            <h3 className="text-lg font-semibold text-gradient">Company Information</h3>
             <ul className="space-y-4">
-              {contactInfo.map((item, index) => (
+              {companyInfo.map((item, index) => (
                 <li key={index} className="flex items-start space-x-3">
-                  <div className="p-2 rounded-lg bg-[#3785CC]/10 border border-[#3785CC]/20">
-                    <item.Icon className="w-5 h-5 text-white/80" />
+                  <div className="p-2 rounded-lg cyber-border bg-secondary/5">
+                    <item.Icon className="w-5 h-5 text-secondary/80" />
                   </div>
-                  <div>
-                    {Array.isArray(item.text) ? (
-                      item.text.map((line, i) => (
-                        <p key={i} className="text-white/80">{line}</p>
-                      ))
-                    ) : (
-                      <span className="text-white/80">{item.text}</span>
-                    )}
-                  </div>
+                  <span className="text-gray-300">{item.text}</span>
                 </li>
               ))}
             </ul>
           </motion.div>
         </motion.div>
+
+        {/* Security Icons */}
+        <div className="relative flex justify-center space-x-20 py-8 opacity-20">
+          <Shield className="w-10 h-10 text-secondary" />
+          <Lock className="w-10 h-10 text-secondary" />
+          <Database className="w-10 h-10 text-secondary" />
+        </div>
 
         {/* Bottom Bar */}
         <motion.div 
@@ -183,17 +188,17 @@ const Footer = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="relative py-8 border-t border-white/20"
+          className="relative py-8 border-t border-secondary/10"
         >
           <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-white/80">
-              &copy; {new Date().getFullYear()} Information Consultancies & Installations (IC&I). All rights reserved.
+            <p className="text-sm text-gray-400">
+              &copy; {new Date().getFullYear()} SwaTech. All rights reserved.
             </p>
             <div className="flex space-x-6">
-              <Link href="/privacy" className="text-sm text-white/80 hover:text-white transition-colors duration-300">
+              <Link href="/privacy" className="text-sm text-gray-400 hover:text-secondary transition-colors duration-300">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-sm text-white/80 hover:text-white transition-colors duration-300">
+              <Link href="/terms" className="text-sm text-gray-400 hover:text-secondary transition-colors duration-300">
                 Terms of Service
               </Link>
             </div> 
