@@ -6,6 +6,7 @@ import { Menu, X, ChevronDown, ChevronUp, Shield, Lock } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useContext } from "react";
 import { LoadingContext } from "./providers/LoadingProvider";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,7 @@ const Navbar = () => {
   const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
   const [mobileSolutionsDropdownOpen, setMobileSolutionsDropdownOpen] = useState(false);
 
+  const router = useRouter();
   const loadingContext = useContext(LoadingContext);
   const { setIsLoading } = loadingContext || { setIsLoading: () => {} };
   
@@ -23,7 +25,7 @@ const Navbar = () => {
     // Trigger loading state before navigation
     setIsLoading(true);
     setTimeout(() => {
-      window.location.href = href;
+      router.push(href);
     }, 300);
   };
 
