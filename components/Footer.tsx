@@ -73,7 +73,7 @@ const Footer = () => {
   }
   
   return (
-    <footer className="bg-dark relative overflow-hidden cyber-scanline">
+    <footer className="bg-dark relative overflow-hidden cyber-scanline border-t-2 border-white">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-full h-full cyber-grid opacity-10"></div>
@@ -106,13 +106,14 @@ const Footer = () => {
           <motion.div variants={itemVariants} className="space-y-6">
             <Link href="/" className="block group">
               <div className="relative">
-                <Image 
+                {/* <Image 
                   src="/logo_ow.webp" 
                   alt="SwaTech Logo" 
                   width={140}
                   height={56}
                   className="h-14 w-auto group-hover:scale-105 transition-transform duration-300"
-                />
+                /> */}
+                <span className="text-2xl font-bold text-secondary">SWATECH</span>
                 <div className="absolute inset-0 bg-secondary/20 filter blur-xl rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
               </div>
             </Link>
