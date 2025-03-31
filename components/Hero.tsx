@@ -113,13 +113,13 @@ export default function Hero() {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden bg-dark cyber-scanline">
+    <div className="relative h-screen overflow-hidden bg-dark cyber-scanline -mt-20">
       {/* Background Layers */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-dark" />
         
         {/* Video Background with reduced opacity */}
-        <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 opacity-550">
           <video 
             ref={videoRef}
             className="object-cover w-full h-full"
