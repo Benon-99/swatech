@@ -99,9 +99,7 @@ export default function FeaturesSection() {
                   height={200}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                  <div className="text-xs text-secondary font-mono opacity-70">// security_monitoring.sys</div>
-                </div>
+                
               </div>
               <div className="rounded-lg overflow-hidden cyber-border h-64 relative group">
                 <div className="absolute inset-0 bg-gradient-to-b from-dark/10 to-dark/60 z-10 group-hover:opacity-0 transition-opacity duration-300"></div>
@@ -112,9 +110,7 @@ export default function FeaturesSection() {
                   height={300}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                  <div className="text-xs text-secondary font-mono opacity-70">// access_control.exe</div>
-                </div>
+                
               </div>
             </div>
             <div className="space-y-6 mt-8">
@@ -127,9 +123,7 @@ export default function FeaturesSection() {
                   height={300}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                  <div className="text-xs text-secondary font-mono opacity-70">// neural_analytics.ai</div>
-                </div>
+                
               </div>
               <div className="rounded-lg overflow-hidden cyber-border h-48 relative group">
                 <div className="absolute inset-0 bg-gradient-to-b from-dark/10 to-dark/60 z-10 group-hover:opacity-0 transition-opacity duration-300"></div>
@@ -140,9 +134,7 @@ export default function FeaturesSection() {
                   height={200}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-                  <div className="text-xs text-secondary font-mono opacity-70">// perimeter_defense.net</div>
-                </div>
+                
               </div>
             </div>
           </motion.div>
