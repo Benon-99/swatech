@@ -38,7 +38,7 @@ export default function AdminHeader() {
               </div>
               <div className="flex flex-col">
                 <span className="text-lg font-semibold tracking-wide">
-                  IC&I Admin
+                  SWATECH Admin
                 </span>
                 <span className="text-xs text-gray-400">Management Portal</span>
               </div>
@@ -56,10 +56,22 @@ export default function AdminHeader() {
                 Dashboard
               </Link>
               <Link
-                href="/admin/blogs"
+                href="/admin/home"
                 className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
               >
-                Blogs
+                Home
+              </Link>
+              <Link
+                href="/admin/aboutUs"
+                className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
+              >
+                About Us
+              </Link>
+              <Link
+                href="/admin/solutions"
+                className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
+              >
+                Solutions
               </Link>
               <Link
                 href="/admin/messages"

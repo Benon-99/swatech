@@ -25,15 +25,15 @@ export default function SolutionsManagement() {
   const queryClient = useQueryClient();
   const [editingSolutionId, setEditingSolutionId] = useState<string | null>(null);
   const [newSolution, setNewSolution] = useState<Partial<Solution>>({
-    title: "",
-    description: "",
-    icon: "Camera",
-    image: "/images/solutions/default.jpg",
-    href: "",
+    title: "Security Solution",
+    description: "A brief description of the security solution",
+    icon: "Shield",
+    image: "/images/solutions/security.jpg",
+    href: "/security",
     content: {
-      overview: "",
-      features: [""],
-      industries: [""],
+      overview: "A comprehensive overview of the security solution",
+      features: ["Advanced threat detection", "Real-time monitoring"],
+      industries: ["Finance", "Healthcare"],
     },
   });
   const [showAddForm, setShowAddForm] = useState(false);
@@ -42,15 +42,15 @@ export default function SolutionsManagement() {
   const { data: solutions, isLoading, error } = useQuery({
     queryKey: ["solutions"],
     queryFn: async () => {
-      const response = await apiClient.get("/solutions");
-      return response.data.solutions as Solution[];
+      const response = await apiClient.get("/api/solutions");
+      return response.data.result as Solution[];
     },
   });
 
   // Create new solution
   const createSolutionMutation = useMutation({
     mutationFn: async (solutionData: Partial<Solution>) => {
-      const response = await apiClient.post("/solutions", solutionData);
+      const response = await apiClient.post("/api/solutions", solutionData);
       return response.data;
     },
     onSuccess: () => {
@@ -58,15 +58,15 @@ export default function SolutionsManagement() {
       toast.success("Solution created successfully!");
       setShowAddForm(false);
       setNewSolution({
-        title: "",
-        description: "",
-        icon: "Camera",
-        image: "/images/solutions/default.jpg",
-        href: "",
+        title: "Security Solution",
+        description: "A brief description of the security solution",
+        icon: "Shield",
+        image: "/images/solutions/security.jpg",
+        href: "/security",
         content: {
-          overview: "",
-          features: [""],
-          industries: [""],
+          overview: "A comprehensive overview of the security solution",
+          features: ["Advanced threat detection", "Real-time monitoring"],
+          industries: ["Finance", "Healthcare"],
         },
       });
     },
@@ -78,7 +78,7 @@ export default function SolutionsManagement() {
   // Update solution
   const updateSolutionMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Solution> }) => {
-      const response = await apiClient.put(`/solutions/${id}`, data);
+      const response = await apiClient.put(`/api/solutions/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export default function SolutionsManagement() {
   // Delete solution
   const deleteSolutionMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(`/solutions/${id}`);
+      const response = await apiClient.delete(`/api/solutions/${id}`);
       return response.data;
     },
     onSuccess: () => {

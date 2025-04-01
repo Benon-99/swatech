@@ -14,11 +14,9 @@ import {
 
 const navigation = [
   {name : "Home" , href : '/admin/home' , icon : Home },
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Blog Posts', href: '/admin/blogs', icon: FileText },
-  { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
-  { name: 'Services', href: '/admin/services', icon: BookAudio },
+  { name: 'About us', href: '/admin/aboutUs', icon: LayoutDashboard },
   { name: 'Solutions', href: '/admin/solutions', icon: Lightbulb },
+  { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
 ];
 
 export default function AdminSidebar() {
